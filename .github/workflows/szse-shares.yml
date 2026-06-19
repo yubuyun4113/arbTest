@@ -3,7 +3,6 @@ name: 深交所基金份额定时获取
 on:
   schedule:
     # 每个交易日 16:00 (北京时间) 运行
-    # UTC+8 = UTC + 8 小时，所以 16:00 北京时间 = 08:00 UTC
     - cron: '0 8 * * 1-5'
   workflow_dispatch:  # 手动触发
 
@@ -33,8 +32,19 @@ jobs:
         run: |
           cd jsl
           python 04_eod_shares.py
+        continue-on-error: true
+
+      - name: 检查是否获取到数据
+        id: check_data
+        run: |
+          if [ -f "jsl/jsl_monitor.db" ]; then
+            echo "has_data=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_data=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: 上传结果文件
+        if: steps.check_data.outputs.has_data == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: szse-shares-data
@@ -42,6 +52,7 @@ jobs:
           retention-days: 7
 
       - name: 提交数据库更新
+        if: steps.check_data.outputs.has_data == 'true'
         env:
           GIT_USER_NAME: "GitHub Actions"
           GIT_USER_EMAIL: "actions@github.com"
