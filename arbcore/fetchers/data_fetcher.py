@@ -3,9 +3,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 import logging
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 import time
 import re
 import sys
@@ -296,18 +296,18 @@ class DataFetcher:
         # 2. API失败，回退到Selenium网页爬取
         logger.info("API接口失败，尝试使用Selenium网页爬取")
         try:
-            # 配置Chrome选项
-            chrome_options = Options()
-            chrome_options.add_argument('--headless')  # 无头模式，不显示浏览器
-            chrome_options.add_argument('--disable-gpu')
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument('--window-size=1920,1080')
-            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
+            # 配置Edge选项
+            edge_options = Options()
+            edge_options.add_argument('--headless')  # 无头模式，不显示浏览器
+            edge_options.add_argument('--disable-gpu')
+            edge_options.add_argument('--no-sandbox')
+            edge_options.add_argument('--disable-dev-shm-usage')
+            edge_options.add_argument('--window-size=1920,1080')
+            edge_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
             
             # 启动浏览器
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=chrome_options)
+            service = Service(EdgeChromiumDriverManager().install())
+            driver = webdriver.Edge(service=service, options=edge_options)
             
             try:
                 # 打开目标网页

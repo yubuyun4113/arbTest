@@ -750,7 +750,7 @@ class DailyUpdater(BaseApp):
             self.logger.error("❌ [本地兜底] 获取期货数据失败。")
 
     def step9_fetch_jsl_shares_from_vps(self):
-        """步骤九：从VPS同步场内份额数据（含深交所+上交所）"""
+        """步骤九：从VPS同步场内份额数据（含深交所+上交所），支持本地兜底"""
         self.logger.info("=== 步骤九：从VPS同步场内份额数据 ===")
         today_str = datetime.now().strftime('%Y-%m-%d')
 
@@ -786,8 +786,56 @@ class DailyUpdater(BaseApp):
             if any(item['date'] >= today_str for item in vps_shares_data):
                 self.db.mark_access_synced(today_str, source='jsl_shares_data')
         else:
-            self.logger.warning("⚠️ [VPS] 未获取到份额数据 (可能VPS采集失败或网络问题)")
+            self.logger.warning("⚠️ [VPS] 未获取到份额数据，启动本地获取兜底...")
+            # 本地兜底：从深交所官方API获取场内份额
+            self._fetch_shares_locally()
 
+    def _fetch_shares_locally(self):
+        """本地兜底：从深交所官方API获取场内份额数据"""
+        self.logger.info("=== [本地兜底] 从深交所官方API获取场内份额 ===")
+        
+        try:
+            from arbcore.fetchers.data_fetcher import data_fetcher
+            
+            # 获取所有基金列表
+            fund_list = self.db.get_unified_fund_list()
+            szse_funds = [f for f in fund_list if str(f.get('fund_code', '')).startswith(('16', '15'))]  # 深交所基金
+            sse_funds = [f for f in fund_list if str(f.get('fund_code', '')).startswith(('50', '51', '16'))]  # 上交所基金
+            
+            today_str = datetime.now().strftime('%Y-%m-%d')
+            success_count = 0
+            fail_count = 0
+            
+            # 获取深交所基金份额
+            for fund in szse_funds:
+                fund_code = fund.get('fund_code')
+                if not fund_code:
+                    continue
+                    
+                try:
+                    result = data_fetcher.fetch_szse_fund_shares_only(fund_code)
+                    if result and result.get('shares'):
+                        self.db.save_unified_history(
+                            date_str=today_str,
+                            fund_code=fund_code,
+                            shares=result['shares']
+                        )
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                except Exception as e:
+                    fail_count += 1
+                    continue
+            
+            if success_count > 0:
+                self.db.mark_access_synced(today_str, source='jsl_shares_data')
+                self.logger.info(f"✅ [本地兜底] 场内份额获取完成: 成功 {success_count}, 失败 {fail_count}")
+            else:
+                self.logger.warning("⚠️ [本地兜底] 未能获取到任何场内份额数据")
+                
+        except Exception as e:
+            self.logger.error(f"❌ [本地兜底] 获取场内份额失败: {e}")
+    
     def _step10_calculate_static_valuation(self):
         """步骤十：基于同步后的因子数据，计算所有基金的静态估值 (static_val)"""
         scripts_dir = os.path.dirname(os.path.abspath(__file__))
