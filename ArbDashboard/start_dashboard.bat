@@ -1,10 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
 title ArbNext Dashboard Launcher
 echo ========================================
 echo  Starting ArbNext Unified Dashboard...
 echo ========================================
 echo [DEBUG] Batch file started at %time%
+echo [DEBUG] Working directory: %cd%
 
 :: Kill any leftover backend process on port 8000 first
 echo [Pre-check] Cleaning port 8000...

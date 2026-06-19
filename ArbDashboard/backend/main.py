@@ -265,6 +265,9 @@ async def lifespan(app: FastAPI):
                 os.path.normpath(os.path.join(backend_dir, "..", "..", "..", ".venv", "Scripts", "python.exe")),
                 os.path.normpath(os.path.join(backend_dir, "..", "..", "..", "Python311", "python.exe")),
                 "python",
+                "python3",
+                os.path.expanduser("~\\AppData\\Local\\Python\\bin\\python.exe"),
+                os.path.expanduser("~\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe"),
             ]
             
             python_exe = None
@@ -1175,6 +1178,9 @@ async def trigger_task(task: str):
         os.path.normpath(os.path.join(backend_dir, "..", "..", "..", ".venv", "Scripts", "python.exe")),  # 上级 .venv
         os.path.normpath(os.path.join(backend_dir, "..", "..", "..", "Python311", "python.exe")),  # Python311
         "python",  # 系统 Python
+        "python3",  # 系统 Python3
+        os.path.expanduser("~\\AppData\\Local\\Python\\bin\\python.exe"),  # 用户本地 Python
+        os.path.expanduser("~\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe"),  # Microsoft Store Python
     ]
     
     python_exe = None
